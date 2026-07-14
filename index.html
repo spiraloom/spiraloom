@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apsu — The Primordial Deep</title>
+<link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel:wght@400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:crosshair;user-select:none}
+
+.video-side{position:fixed;top:0;height:100%;width:26vw;overflow:hidden;background:#000;z-index:0}
+.video-side video{height:100%;width:auto;display:block}
+#left-side{left:0}
+#right-side{right:0;display:flex;justify-content:flex-end}
+
+#overlay-canvas{position:fixed;inset:0;display:block;z-index:1}
+
+#ui{position:fixed;inset:0;pointer-events:none;z-index:20;font-family:"Uncial Antiqua",serif}
+#title{position:absolute;top:2rem;left:50%;transform:translateX(-50%);text-align:center;white-space:nowrap}
+#title h1{font-family:"Uncial Antiqua",serif;font-size:clamp(1rem,2.5vw,1.5rem);letter-spacing:.32em;color:#dcc4c0;opacity:.4;text-transform:uppercase}
+#title p{font-family:"Cinzel",serif;font-size:clamp(.38rem,.9vw,.5rem);letter-spacing:.68em;color:#96503a;opacity:.3;margin-top:.35rem;text-transform:uppercase}
+#hint{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);font-family:"Cinzel",serif;font-size:clamp(.38rem,.9vw,.48rem);letter-spacing:.58em;color:#b89090;opacity:0;text-transform:uppercase;white-space:nowrap;animation:hp 6s ease-in-out 2.5s infinite}
+@keyframes hp{0%,100%{opacity:0}40%,60%{opacity:.18}}
+#overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:2.5rem}
+#saying{max-width:min(580px,86vw);text-align:center;opacity:0;transform:translateY(24px);transition:opacity 2s ease,transform 2s ease}
+#saying.visible{opacity:1;transform:translateY(0)}
+#saying.hiding{opacity:0;transform:translateY(-14px);transition:opacity .6s ease,transform .6s ease}
+#saying-text{font-family:"Uncial Antiqua",serif;font-size:clamp(1rem,2.7vw,1.35rem);line-height:2.05;color:#f2e8e6;letter-spacing:.055em;text-shadow:0 0 55px rgba(215,165,120,.45),0 0 130px rgba(170,110,80,.18),0 2px 14px rgba(0,0,0,1)}
+#saying-source{margin-top:1.05rem;font-family:"Cinzel",serif;font-size:clamp(.42rem,1vw,.54rem);letter-spacing:.52em;color:#ad8055;opacity:.62;text-transform:uppercase;text-shadow:0 1px 8px rgba(0,0,0,.95)}
+</style>
+</head>
+<body>
+
+<div class="video-side" id="left-side">
+  <video autoplay loop muted playsinline>
+    <source src="https://pub-d162b784ec1e4b9480c9426577ad674c.r2.dev/Spiraloom%20background1.mp4" type="video/mp4">
+  </video>
+</div>
+
+<div class="video-side" id="right-side">
+  <video autoplay loop muted playsinline>
+    <source src="https://pub-d162b784ec1e4b9480c9426577ad674c.r2.dev/Spiraloom%20background1.mp4" type="video/mp4">
+  </video>
+</div>
+
+<canvas id="overlay-canvas"></canvas>
+
+<div id="ui">
+  <div id="title"><h1>Apsu</h1><p>The Primordial Deep</p></div>
+  <div id="hint">touch the waters</div>
+  <div id="overlay">
+    <div id="saying">
+      <div id="saying-text"></div>
+      <div id="saying-source"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var SAYINGS=[
+  {text:"In the beginning there was Nammu, the primeval sea, mother who gave birth to heaven and earth.",source:"Sumerian Creation — Eridu Genesis"},
+  {text:"Tiamat and Apsu — their waters were mingled together, and no field was formed, no marsh was seen.",source:"Enuma Elish, Tablet I"},
+  {text:"From the dark waters of Engur, all wisdom rises.",source:"Sumerian — Temple Hymn of Eridu"},
+  {text:"The heart of the Abzu is a holy place, purified by Enki's word.",source:"Sumerian — Enki and the World Order"},
+  {text:"When on high the heaven had not been named, firm ground below had not been called by name — then it was that the gods were formed within them.",source:"Enuma Elish, Tablet I"},
+  {text:"Who knows the waters knows the names of all things.",source:"Sumerian Proverb"},
+  {text:"Holy Inanna, queen of heaven, she of the enduring heart — I sing your praise.",source:"Hymn to Inanna"},
+  {text:"I am the lady of heaven, who makes heaven tremble, who makes earth quake.",source:"Inanna's Descent"},
+  {text:"The word of Enki is deep water — deep water that none can fathom.",source:"Sumerian Hymn to Enki"},
+  {text:"A perennial plant whose roots are not known has no shade.",source:"Sumerian Proverb"},
+  {text:"The river carries away, but the sea does not fill.",source:"Sumerian Proverb"},
+  {text:"The flood swept over — and the kingship descended from heaven to Eridu.",source:"Sumerian King List"},
+  {text:"Gilgamesh, where are you wandering? You will never find the eternal life you seek.",source:"Epic of Gilgamesh, Tablet X"},
+  {text:"From the horizon of heaven to the zenith of heaven — Inanna surveys them all.",source:"Hymn to Inanna"},
+  {text:"A loving heart builds a house, a hostile heart destroys a house.",source:"Sumerian Proverb"},
+  {text:"Where the water goes, the reed follows. Where the wind blows, the dust follows.",source:"Sumerian Proverb"},
+  {text:"Enlil, whose command is far reaching — he decided to send the great flood.",source:"Atrahasis Epic, Tablet II"},
+  {text:"For a man's bliss and woe one looks to his god.",source:"Sumerian Proverb"},
+  {text:"She who has the power of the me, who rises over the holy sky — Inanna, great lady of heaven.",source:"Exaltation of Inanna"},
+  {text:"Build like a lord, work like a slave.",source:"Sumerian Proverb"},
+  {text:"The silent one who has followed the path of a god — that person is good to his god.",source:"Dialogue of Pessimism"},
+];
+
+var canvas=document.getElementById('overlay-canvas');
+var ctx=canvas.getContext('2d');
+var W,H,T=0;
+function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+window.addEventListener('resize',resize);
+resize();
+
+var IRIS=[
+  [235,215,220],[200,90,85],[140,25,20],[230,170,150],
+  [110,140,220],[220,180,90],[180,60,50],[240,230,235]
+];
+function irisCol(v){
+  v=((v%1)+1)%1;
+  var f=v*IRIS.length,i=Math.floor(f),fr=f-i;
+  var a=IRIS[i%IRIS.length],b=IRIS[(i+1)%IRIS.length];
+  return [Math.round(a[0]+(b[0]-a[0])*fr),Math.round(a[1]+(b[1]-a[1])*fr),Math.round(a[2]+(b[2]-a[2])*fr)];
+}
+var ETCH=[200,170,118];
+
+var SIGNS=[
+  [[-0.6,-0.6,0.6,0.6],[0.6,-0.6,-0.6,0.6],[-0.7,0,0.7,0],[0,-0.7,0,0.7]],
+  [[-0.7,-0.35,0.7,-0.35],[-0.7,0,0.7,0],[-0.7,0.35,0.7,0.35],[0.55,-0.35,0.55,0.6]],
+  [[-0.7,0,0.7,0],[0,-0.7,0,0.7],[-0.5,-0.5,0.5,0.5],[0.5,-0.5,-0.5,0.5]],
+  [[-0.6,-0.4,0.6,-0.4],[-0.6,0,0.6,0],[-0.6,0.4,0.6,0.4],[0.5,-0.4,0.5,0.6]],
+  [[0,-0.7,0,0.7],[-0.55,-0.15,0.05,-0.15],[-0.45,0.25,0.05,0.25]],
+  [[-0.6,-0.6,-0.6,0.6],[-0.6,0.6,0.6,0.6],[0.1,-0.2,0.1,0.6]],
+  [[-0.7,0.3,0,0],[0,-0.65,0,0],[0.7,0.3,0,0],[0,0,0,0.5]],
+  [[-0.75,0,0.75,0],[0,0,0,0.65],[-0.4,0.3,0.4,0.3]],
+  [[0,-0.6,0.5,0.2],[0.5,0.2,-0.5,0.2],[-0.5,0.2,0,-0.6],[0,0.2,0,0.6]],
+  [[-0.6,-0.3,0.6,-0.3],[-0.3,-0.6,-0.3,0.6],[0.3,-0.6,0.3,0.6]],
+  [[-0.5,-0.5,0.5,-0.5],[0.5,-0.5,0.5,0.5],[0.5,0.5,-0.5,0.5],[-0.5,0.5,-0.5,-0.5]],
+  [[0,-0.7,-0.5,0.3],[0,-0.7,0.5,0.3],[-0.3,0,0.3,0]],
+];
+
+function drawEtchedSign(sign,cx,cy,size,alpha,col,squish){
+  if(alpha<=0.01)return;
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.scale(1,squish);
+  ctx.globalAlpha=alpha;
+  ctx.strokeStyle='rgb('+col[0]+','+col[1]+','+col[2]+')';
+  ctx.lineWidth=Math.max(0.6,size*0.09);
+  ctx.lineCap='round';
+  ctx.beginPath();
+  for(var i=0;i<sign.length;i++){
+    var s=sign[i];
+    ctx.moveTo(s[0]*size,s[1]*size);
+    ctx.lineTo(s[2]*size,s[3]*size);
+  }
+  ctx.stroke();
+  ctx.fillStyle='rgb('+col[0]+','+col[1]+','+col[2]+')';
+  for(var j=0;j<sign.length;j++){
+    var s2=sign[j];
+    ctx.beginPath();
+    ctx.arc(s2[0]*size,s2[1]*size,Math.max(0.7,size*0.10),0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function buildOrb(){
+  var pts=[];
+  var rows=13;
+  for(var r=1;r<rows;r++){
+    var lat=(r/rows)*Math.PI;
+    var ringR=Math.sin(lat);
+    var count=Math.max(3,Math.round(ringR*22));
+    for(var c2=0;c2<count;c2++){
+      pts.push({
+        lat:lat, lon:(c2/count)*Math.PI*2+(r%2)*0.15,
+        sign:Math.floor(Math.random()*SIGNS.length),
+        jitter:Math.random()*0.06-0.03,
+        driftA:Math.random()*Math.PI*2,
+        driftS:0.5+Math.random()*1.2
+      });
+    }
+  }
+  return pts;
+}
+
+var events=[];
+function spawnEvent(x,y){
+  events.push({
+    x:x, y:Math.max(H*0.28,Math.min(y,H*0.62)),
+    age:0,
+    formEnd:100, holdEnd:400, maxAge:580,
+    pts:buildOrb(),
+    R:Math.min(W,H)*0.28,
+    rot0:Math.random()*Math.PI*2
+  });
+}
+
+function easeOut(t){return 1-Math.pow(1-t,3);}
+function easeInOut(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+
+function drawEvent(ev){
+  var age=ev.age, cx=ev.x, cy=ev.y;
+  var phase, phaseT;
+  if(age<ev.formEnd){phase='form';phaseT=age/ev.formEnd;}
+  else if(age<ev.holdEnd){phase='hold';phaseT=(age-ev.formEnd)/(ev.holdEnd-ev.formEnd);}
+  else{phase='dissipate';phaseT=(age-ev.holdEnd)/(ev.maxAge-ev.holdEnd);}
+
+  var gAlpha=phase==='form'?easeOut(phaseT):(phase==='dissipate'?1-easeInOut(phaseT):1);
+  var R=ev.R;
+  var spread=0;
+  if(phase==='dissipate'){spread=easeInOut(phaseT);R=ev.R*(1+spread*0.4);}
+
+  var halo=ctx.createRadialGradient(cx,cy-R*0.25,R*0.3,cx,cy-R*0.25,R*1.7);
+  halo.addColorStop(0,'rgba(125,95,62,'+(gAlpha*0.13)+')');
+  halo.addColorStop(0.55,'rgba(80,58,38,'+(gAlpha*0.06)+')');
+  halo.addColorStop(1,'rgba(40,28,18,0)');
+  ctx.beginPath();ctx.arc(cx,cy-R*0.25,R*1.7,0,Math.PI*2);
+  ctx.fillStyle=halo;ctx.fill();
+
+  var body=ctx.createRadialGradient(cx-R*0.25,cy-R*0.35,R*0.1,cx,cy,R);
+  body.addColorStop(0,'rgba(36,28,22,'+(gAlpha*0.38)+')');
+  body.addColorStop(0.6,'rgba(20,15,12,'+(gAlpha*0.42)+')');
+  body.addColorStop(1,'rgba(6,4,3,'+(gAlpha*0.30)+')');
+  ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.fillStyle=body;ctx.fill();
+
+  var rim=ctx.createLinearGradient(cx,cy-R,cx,cy+R);
+  rim.addColorStop(0,'rgba(155,122,80,'+(gAlpha*0.32)+')');
+  rim.addColorStop(0.5,'rgba(90,68,44,'+(gAlpha*0.1)+')');
+  rim.addColorStop(1,'rgba(40,30,20,'+(gAlpha*0.04)+')');
+  ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.strokeStyle=rim;ctx.lineWidth=1.1;ctx.stroke();
+
+  var rot=ev.rot0+age*0.0038;
+  var shimmerLon=age*0.011;
+
+  for(var i=0;i<ev.pts.length;i++){
+    var p=ev.pts[i];
+    var lon=p.lon+rot;
+    var x3=Math.sin(p.lat)*Math.cos(lon);
+    var z3=Math.sin(p.lat)*Math.sin(lon);
+    var y3=Math.cos(p.lat);
+    if(z3<-0.12)continue;
+
+    var dx=0,dy=0,extraFade=1;
+    if(phase==='dissipate'){
+      dx=Math.cos(p.driftA)*spread*R*1.5*p.driftS;
+      dy=Math.sin(p.driftA)*spread*R*1.1*p.driftS-spread*R*0.55;
+      extraFade=1-spread*0.35;
+    }
+    var px=cx+x3*R+dx;
+    var py=cy+y3*R*0.98+dy;
+    var depthA=0.25+Math.max(0,z3)*0.75;
+    var squish=0.55+Math.abs(Math.sin(p.lat))*0.45;
+    var size=R*0.055*(0.7+z3*0.35);
+
+    var col=[ETCH[0]+p.jitter*90,ETCH[1]+p.jitter*70,ETCH[2]+p.jitter*55];
+    var shimDist=Math.abs(((lon-shimmerLon)%(Math.PI*2)+Math.PI*3)%(Math.PI*2)-Math.PI);
+    var shim=Math.max(0,1-shimDist/0.7);
+    if(shim>0.02){
+      var sc2=irisCol(p.lat*0.4+age*0.002);
+      col=[col[0]+(sc2[0]-col[0])*shim*0.75,
+           col[1]+(sc2[1]-col[1])*shim*0.75,
+           col[2]+(sc2[2]-col[2])*shim*0.75];
+    }
+    col=[Math.round(col[0]),Math.round(col[1]),Math.round(col[2])];
+    var alpha=gAlpha*depthA*(0.82+shim*0.18)*extraFade;
+    drawEtchedSign(SIGNS[p.sign],px,py,size,alpha,col,squish);
+  }
+
+  if(phase==='dissipate'){
+    for(var di=0;di<14;di++){
+      var da=(di/14)*Math.PI*2+age*0.01;
+      var dr=R*(0.5+spread*1.4)*(0.6+(di%5)*0.12);
+      var dxp=cx+Math.cos(da)*dr;
+      var dyp=cy+Math.sin(da)*dr*0.8-spread*R*0.7;
+      var dc=irisCol(di*0.1+age*0.002);
+      ctx.beginPath();
+      ctx.arc(dxp,dyp,1.1*(1-spread),0,Math.PI*2);
+      ctx.fillStyle='rgba('+dc[0]+','+dc[1]+','+dc[2]+','+((1-spread)*0.5)+')';
+      ctx.fill();
+    }
+  }
+}
+
+function drawFrame(){
+  T++;
+  ctx.clearRect(0,0,W,H);
+  for(var i=events.length-1;i>=0;i--){
+    var ev=events[i];
+    ev.age++;
+    if(ev.age>ev.maxAge){events.splice(i,1);continue;}
+    drawEvent(ev);
+  }
+  requestAnimationFrame(drawFrame);
+}
+drawFrame();
+
+var pool=SAYINGS.slice();
+var sayEl=document.getElementById('saying');
+var txtEl=document.getElementById('saying-text');
+var srcEl=document.getElementById('saying-source');
+function pick(){if(!pool.length)pool=SAYINGS.slice();var i=Math.floor(Math.random()*pool.length);return pool.splice(i,1)[0];}
+var pendingTimer=null;
+function scheduleSaying(){
+  if(pendingTimer)clearTimeout(pendingTimer);
+  var s=pick();
+  if(sayEl.classList.contains('visible')){
+    sayEl.classList.remove('visible');sayEl.classList.add('hiding');
+    setTimeout(function(){sayEl.classList.remove('hiding');},560);
+  }
+  pendingTimer=setTimeout(function(){
+    txtEl.textContent=s.text;srcEl.textContent=s.source;
+    void sayEl.offsetWidth;
+    sayEl.classList.add('visible');
+  },6800);
+}
+function interact(x,y){spawnEvent(x,y);scheduleSaying();}
+canvas.addEventListener('click',function(e){interact(e.clientX,e.clientY);});
+canvas.addEventListener('touchstart',function(e){e.preventDefault();var t=e.touches[0];interact(t.clientX,t.clientY);},{passive:false});
+window.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' ')interact(W/2,H/2);});
+</script>
+</body>
+</html>
