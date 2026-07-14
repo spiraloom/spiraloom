@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Wizard</title>
+<link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel:wght@400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    cursor: crosshair;
+    user-select: none;
+  }
+  .video-side {
+    position: fixed;
+    top: 0;
+    height: 100%;
+    width: 38vw;
+    overflow: hidden;
+    background: #000;
+    z-index: 0;
+  }
+  .video-side video {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  #left-side { left: 0; }
+  #left-side video { transform: scaleX(-1); }
+  #right-side { right: 0; }
+
+  #overlay-canvas{position:fixed;inset:0;display:block;z-index:1}
+
+  #ui{position:fixed;inset:0;pointer-events:none;z-index:20;font-family:"Uncial Antiqua",serif}
+  #title{position:absolute;top:2rem;left:50%;transform:translateX(-50%);text-align:center;white-space:nowrap}
+  #title h1{font-family:"Uncial Antiqua",serif;font-size:clamp(1rem,2.5vw,1.5rem);letter-spacing:.32em;color:#dcc4c0;opacity:.4;text-transform:uppercase}
+  #title p{font-family:"Cinzel",serif;font-size:clamp(.38rem,.9vw,.5rem);letter-spacing:.68em;color:#96503a;opacity:.3;margin-top:.35rem;text-transform:uppercase}
+  #hint{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);font-family:"Cinzel",serif;font-size:clamp(.38rem,.9vw,.48rem);letter-spacing:.58em;color:#b89090;opacity:0;text-transform:uppercase;white-space:nowrap;animation:hp 6s ease-in-out 2.5s infinite}
+  @keyframes hp{0%,100%{opacity:0}40%,60%{opacity:.18}}
+</style>
+</head>
+<body>
+
+<div class="video-side" id="left-side">
+  <video autoplay loop muted playsinline>
+    <source src="https://pub-d162b784ec1e4b9480c9426577ad674c.r2.dev/Spiraloom%20background1.mp4" type="video/mp4">
+  </video>
+</div>
+
+<div class="video-side" id="right-side">
+  <video autoplay loop muted playsinline>
+    <source src="https://pub-d162b784ec1e4b9480c9426577ad674c.r2.dev/Spiraloom%20background1.mp4" type="video/mp4">
+  </video>
+</div>
+
+<canvas id="overlay-canvas"></canvas>
+
+<div id="ui">
+  <div id="title"><h1>The Wizard</h1><p>Summon Him</p></div>
+  <div id="hint">click to summon</div>
+</div>
+
+<script>
+var canvas=document.getElementById('overlay-canvas');
+var ctx=canvas.getContext('2d');
+var W,H,T=0;
+function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+window.addEventListener('resize',resize);
+resize();
+
+var IRIS=[
+  [235,215,220],[200,90,85],[140,25,20],[230,170,150],
+  [110,140,220],[220,180,90],[180,60,50],[240,230,235]
+];
+function irisCol(v){
+  v=((v%1)+1)%1;
+  var f=v*IRIS.length,i=Math.floor(f),fr=f-i;
+  var a=IRIS[i%IRIS.length],b=IRIS[(i+1)%IRIS.length];
+  return [Math.round(a[0]+(b[0]-a[0])*fr),Math.round(a[1]+(b[1]-a[1])*fr),Math.round(a[2]+(b[2]-a[2])*fr)];
+}
+
+// ══════════════════════════════════════════════════════════════
+// CARTOON WIZARD — full character with proper proportions and face
+// ══════════════════════════════════════════════════════════════
+var wizardEvents=[];
+function spawnWizard(x,y){
+  wizardEvents.length=0;
+  wizardEvents.push({
+    x:x, y:Math.max(H*0.42,Math.min(y,H*0.62)),
+    age:0,
+    maxAge:280,
+    seed:Math.random()*1000,
+    bolts:Array.from({length:6},function(){return {
+      angle:Math.random()*Math.PI*2,
+      len:90+Math.random()*160,
+      delay:Math.floor(Math.random()*35),
+      seed:Math.random()*100
+    };})
+  });
+}
+
+function drawLightningBolt(cx,cy,angle,len,alpha,seed){
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  var segs=6;
+  for(var i=1;i<=segs;i++){
+    var t=i/segs;
+    var nx=t*len;
+    var ny=(Math.sin(seed+i*2.3)*16)*(1-t*0.25);
+    ctx.lineTo(nx,ny);
+  }
+  var c=irisCol(seed*0.01+T*0.01);
+  ctx.strokeStyle='rgba('+c[0]+','+c[1]+','+c[2]+','+alpha+')';
+  ctx.lineWidth=2.5;
+  ctx.shadowColor='rgba('+c[0]+','+c[1]+','+c[2]+',0.9)';
+  ctx.shadowBlur=16;
+  ctx.stroke();
+  ctx.shadowBlur=0;
+  ctx.restore();
+}
+
+function drawCartoonWizard(cx,cy,scale,alpha,seed,age){
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.scale(scale,scale);
+  ctx.globalAlpha=alpha;
+
+  var shimmer=T*0.02+seed*0.01;
+  function ic(off,a){var c=irisCol(shimmer+off);return 'rgba('+c[0]+','+c[1]+','+c[2]+','+(a!==undefined?a:1)+')';}
+
+  var raiseT=Math.min(1,age/35);
+  var staffAngle=-1.0-raiseT*0.45;
+  var bob=Math.sin(T*0.06)*3;
+
+  ctx.translate(0,bob);
+
+  // ── ROBE (rounded cartoon shape, wide hem) ──
+  ctx.beginPath();
+  ctx.moveTo(-14,-50);
+  ctx.bezierCurveTo(-40,-30,-70,20,-85,95);
+  ctx.bezierCurveTo(-40,80,40,80,85,95);
+  ctx.bezierCurveTo(70,20,40,-30,14,-50);
+  ctx.closePath();
+  var robeGrad=ctx.createLinearGradient(0,-50,0,95);
+  robeGrad.addColorStop(0, ic(0));
+  robeGrad.addColorStop(0.45, ic(0.28));
+  robeGrad.addColorStop(1, ic(0.55));
+  ctx.fillStyle=robeGrad;
+  ctx.fill();
+  ctx.strokeStyle='rgba(20,15,10,0.55)';
+  ctx.lineWidth=2.5;
+  ctx.stroke();
+
+  // robe hem scallops
+  ctx.beginPath();
+  for(var s=-85;s<=85;s+=17){
+    ctx.moveTo(s,92);
+    ctx.quadraticCurveTo(s+8.5,105,s+17,92);
+  }
+  ctx.strokeStyle='rgba(20,15,10,0.5)';
+  ctx.lineWidth=2;
+  ctx.stroke();
+
+  // robe fold highlights
+  for(var f=0;f<3;f++){
+    ctx.beginPath();
+    ctx.moveTo(-25+f*25,-35);
+    ctx.quadraticCurveTo(-20+f*25,25,-30+f*30,88);
+    ctx.strokeStyle=ic(0.15+f*0.22,0.4);
+    ctx.lineWidth=1.3;
+    ctx.stroke();
+  }
+
+  // ── BELT ──
+  ctx.beginPath();
+  ctx.moveTo(-38,15);
+  ctx.quadraticCurveTo(0,26,38,15);
+  ctx.strokeStyle='rgba(90,60,25,0.85)';
+  ctx.lineWidth=6;
+  ctx.stroke();
+  // belt buckle
+  ctx.beginPath();
+  ctx.arc(0,20,7,0,Math.PI*2);
+  ctx.fillStyle=ic(0.5,0.9);
+  ctx.fill();
+  ctx.strokeStyle='rgba(20,15,10,0.6)';
+  ctx.lineWidth=1.5;
+  ctx.stroke();
+
+  // ── FREE ARM (waving slightly) ──
+  var armWave=Math.sin(T*0.08)*0.15;
+  ctx.strokeStyle=robeGrad;
+  ctx.lineWidth=13;
+  ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(-30,-25);
+  ctx.quadraticCurveTo(-60,0+armWave*20,-55,45+armWave*10);
+  ctx.stroke();
+  // sleeve cuff
+  ctx.beginPath();
+  ctx.arc(-55,45,10,0,Math.PI*2);
+  ctx.fillStyle='rgba(20,15,10,0.3)';
+  ctx.fill();
+  // hand
+  ctx.beginPath();
+  ctx.arc(-55,50,7,0,Math.PI*2);
+  ctx.fillStyle='rgba(224,196,168,0.95)';
+  ctx.fill();
+
+  // ── STAFF ARM + STAFF ──
+  ctx.save();
+  ctx.translate(30,-25);
+  ctx.rotate(staffAngle);
+  // arm to staff
+  ctx.strokeStyle=robeGrad;
+  ctx.lineWidth=13;
+  ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.lineTo(0,55);
+  ctx.stroke();
+  // hand gripping staff
+  ctx.beginPath();
+  ctx.arc(0,55,8,0,Math.PI*2);
+  ctx.fillStyle='rgba(224,196,168,0.95)';
+  ctx.fill();
+  // staff shaft
+  ctx.beginPath();
+  ctx.moveTo(0,60);
+  ctx.lineTo(0,-155);
+  ctx.strokeStyle='rgba(110,72,35,0.95)';
+  ctx.lineWidth=6;
+  ctx.lineCap='round';
+  ctx.stroke();
+  // staff wood grain
+  ctx.strokeStyle='rgba(70,45,20,0.5)';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(-1,50);ctx.lineTo(-1,-140);
+  ctx.stroke();
+  // staff crystal/orb top
+  var pulseR=24+Math.sin(T*0.1)*3;
+  var orbGlow=ctx.createRadialGradient(0,-155,0,0,-155,pulseR);
+  var oc=irisCol(shimmer+0.5);
+  orbGlow.addColorStop(0,'rgba('+oc[0]+','+oc[1]+','+oc[2]+',0.95)');
+  orbGlow.addColorStop(0.6,'rgba('+oc[0]+','+oc[1]+','+oc[2]+',0.4)');
+  orbGlow.addColorStop(1,'rgba('+oc[0]+','+oc[1]+','+oc[2]+',0)');
+  ctx.beginPath();
+  ctx.arc(0,-155,pulseR,0,Math.PI*2);
+  ctx.fillStyle=orbGlow;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0,-155,8,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.9)';
+  ctx.fill();
+  ctx.restore();
+
+  // ── HEAD (cartoon proportions, rounder) ──
+  ctx.beginPath();
+  ctx.arc(0,-72,22,0,Math.PI*2);
+  ctx.fillStyle='rgba(230,200,172,0.98)';
+  ctx.fill();
+  ctx.strokeStyle='rgba(20,15,10,0.4)';
+  ctx.lineWidth=1.5;
+  ctx.stroke();
+
+  // ── HAIR (brown, flowing, cartoon strands) ──
+  ctx.strokeStyle='rgba(96,58,28,0.95)';
+  ctx.lineWidth=4;
+  ctx.lineCap='round';
+  for(var h=0;h<8;h++){
+    var ha=-Math.PI/2 + (h-3.5)*0.3;
+    var wobble=Math.sin(T*0.05+h*1.3)*5;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(ha)*20,-72+Math.sin(ha)*20);
+    ctx.quadraticCurveTo(
+      Math.cos(ha)*36+wobble, -72+Math.sin(ha)*36-6,
+      Math.cos(ha)*30+wobble*1.6, -72+Math.sin(ha)*46
+    );
+    ctx.stroke();
+  }
+
+  // ── FACE (simple cartoon features) ──
+  // eyebrows
+  ctx.strokeStyle='rgba(96,58,28,0.9)';
+  ctx.lineWidth=2.5;
+  ctx.beginPath();
+  ctx.moveTo(-11,-76);ctx.lineTo(-4,-78);
+  ctx.moveTo(4,-78);ctx.lineTo(11,-76);
+  ctx.stroke();
+  // eyes
+  ctx.fillStyle='rgba(30,20,15,0.9)';
+  ctx.beginPath();ctx.arc(-7,-72,2,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(7,-72,2,0,Math.PI*2);ctx.fill();
+  // nose
+  ctx.strokeStyle='rgba(190,150,120,0.7)';
+  ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.moveTo(0,-70);ctx.quadraticCurveTo(3,-64,0,-62);
+  ctx.stroke();
+  // mustache + beard (cartoon flowing)
+  ctx.fillStyle='rgba(96,58,28,0.95)';
+  ctx.beginPath();
+  ctx.moveTo(-13,-63);
+  ctx.quadraticCurveTo(0,-58,13,-63);
+  ctx.quadraticCurveTo(10,-55,0,-52);
+  ctx.quadraticCurveTo(-10,-55,-13,-63);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-11,-58);
+  ctx.quadraticCurveTo(-4,-30,0,-15);
+  ctx.quadraticCurveTo(4,-30,11,-58);
+  ctx.quadraticCurveTo(6,-42,0,-38);
+  ctx.quadraticCurveTo(-6,-42,-11,-58);
+  ctx.fill();
+
+  // ── WIZARD HAT ──
+  ctx.save();
+  ctx.translate(0,-88);
+  ctx.rotate(-0.05);
+  ctx.beginPath();
+  ctx.moveTo(-24,4);
+  ctx.quadraticCurveTo(0,10,24,4);
+  ctx.quadraticCurveTo(4,-15,2,-70);
+  ctx.quadraticCurveTo(0,-78,-2,-70);
+  ctx.quadraticCurveTo(-6,-15,-24,4);
+  ctx.closePath();
+  var hatGrad=ctx.createLinearGradient(0,-70,0,4);
+  hatGrad.addColorStop(0,ic(0.6));
+  hatGrad.addColorStop(1,ic(0.9));
+  ctx.fillStyle=hatGrad;
+  ctx.fill();
+  ctx.strokeStyle='rgba(20,15,10,0.5)';
+  ctx.lineWidth=1.5;
+  ctx.stroke();
+  // hat brim
+  ctx.beginPath();
+  ctx.ellipse(0,5,28,7,0,0,Math.PI*2);
+  ctx.fillStyle=ic(0.75);
+  ctx.fill();
+  ctx.strokeStyle='rgba(20,15,10,0.5)';
+  ctx.stroke();
+  // little stars on hat
+  ['0.1','0.4','0.7'].forEach(function(off,idx){
+    var sy=-10-idx*20;
+    var sc=irisCol(shimmer+parseFloat(off));
+    ctx.fillStyle='rgba('+sc[0]+','+sc[1]+','+sc[2]+',0.9)';
+    ctx.beginPath();
+    ctx.arc(idx%2===0?-6:6, sy, 2, 0, Math.PI*2);
+    ctx.fill();
+  });
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawWizardEvent(ev){
+  var age=ev.age;
+  var prog=age/ev.maxAge;
+  var fadeIn=Math.min(1,age/25);
+  var fadeOut=1-Math.max(0,(age-(ev.maxAge-45))/45);
+  var alpha=Math.min(fadeIn,fadeOut);
+  if(alpha<=0.01)return;
+
+  if(prog<0.6){
+    ev.bolts.forEach(function(b){
+      if(age<b.delay)return;
+      var boltAge=age-b.delay;
+      var boltAlpha=Math.max(0,1-boltAge/18)*alpha;
+      if(boltAlpha<=0)return;
+      drawLightningBolt(ev.x,ev.y-60,b.angle,b.len,boltAlpha,b.seed);
+    });
+  }
+
+  if(age<8){
+    var flashA=(1-age/8)*0.2*alpha;
+    ctx.fillStyle='rgba(220,225,245,'+flashA+')';
+    ctx.fillRect(0,0,W,H);
+  }
+
+  drawCartoonWizard(ev.x,ev.y,1.3,alpha,ev.seed,age);
+
+  if(age>42 && age<ev.maxAge-30){
+    var bubA=Math.min(1,(age-42)/18)*alpha;
+    var bx=ev.x+130, by=ev.y-260;
+    ctx.save();
+    ctx.globalAlpha=bubA;
+    ctx.beginPath();
+    ctx.ellipse(bx,by,92,34,0,0,Math.PI*2);
+    ctx.fillStyle='rgba(248,242,228,0.96)';
+    ctx.fill();
+    ctx.strokeStyle='rgba(40,25,10,0.85)';
+    ctx.lineWidth=2.5;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(bx-55,by+24);
+    ctx.lineTo(bx-78,by+50);
+    ctx.lineTo(bx-32,by+28);
+    ctx.closePath();
+    ctx.fillStyle='rgba(248,242,228,0.96)';
+    ctx.fill();
+    ctx.strokeStyle='rgba(40,25,10,0.85)';
+    ctx.lineWidth=2.5;
+    ctx.stroke();
+    ctx.fillStyle='rgba(30,20,10,0.95)';
+    ctx.font='bold 19px "Cinzel", serif';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText('I need bananas',bx,by);
+    ctx.restore();
+  }
+}
+
+function drawFrame(){
+  T++;
+  ctx.clearRect(0,0,W,H);
+  for(var i=wizardEvents.length-1;i>=0;i--){
+    var ev=wizardEvents[i];
+    ev.age++;
+    if(ev.age>ev.maxAge){wizardEvents.splice(i,1);continue;}
+    drawWizardEvent(ev);
+  }
+  requestAnimationFrame(drawFrame);
+}
+drawFrame();
+
+function interact(x,y){spawnWizard(x,y);}
+canvas.addEventListener('click',function(e){interact(e.clientX,e.clientY);});
+canvas.addEventListener('touchstart',function(e){e.preventDefault();var t=e.touches[0];interact(t.clientX,t.clientY);},{passive:false});
+window.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' ')interact(W/2,H/2);});
+</script>
+</body>
+</html>
