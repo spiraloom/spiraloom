@@ -12,66 +12,27 @@
     overflow: hidden;
     background: #000;
   }
-  #bg-video {
+  #video-wrap {
     position: fixed;
-    top: 0;
-    right: 0;
-    height: 100%;
-    width: auto;
-    min-width: 100%;
+    inset: 0;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
     background: #000;
   }
-  #status {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    color: #fff;
-    font-family: monospace;
-    font-size: 14px;
-    z-index: 999;
-    background: rgba(0,0,0,0.7);
-    padding: 8px 12px;
-    border-radius: 6px;
+  #bg-video {
+    height: 100%;
+    width: auto;
   }
 </style>
 </head>
 <body>
 
-<div id="status">loading...</div>
-
-<video id="bg-video" autoplay loop muted playsinline webkit-playsinline preload="auto">
-  <source src="https://pub-d162b784ec1e4b9480c9426577ad674c.r2.dev/Spiraloom%20background1.mp4" type="video/mp4">
-</video>
-
-<script>
-var video = document.getElementById('bg-video');
-var status = document.getElementById('status');
-
-video.addEventListener('loadeddata', function() {
-  status.textContent = 'video loaded, playing...';
-  setTimeout(function(){ status.style.display = 'none'; }, 2000);
-});
-
-video.addEventListener('error', function(e) {
-  status.textContent = 'ERROR: ' + (video.error ? video.error.message : 'unknown');
-  status.style.background = 'rgba(150,0,0,0.8)';
-});
-
-video.addEventListener('canplay', function() {
-  video.play().catch(function(err) {
-    status.textContent = 'play() blocked: ' + err.message;
-    status.style.background = 'rgba(150,0,0,0.8)';
-  });
-});
-
-// tap anywhere to force play (mobile autoplay fallback)
-document.body.addEventListener('touchstart', function() {
-  video.play();
-});
-document.body.addEventListener('click', function() {
-  video.play();
-});
-</script>
+<div id="video-wrap">
+  <video id="bg-video" autoplay loop muted playsinline>
+    <source src="https://pub-d162b784ec1e4b9480c9426577ad674c.r2.dev/Spiraloom%20background1.mp4" type="video/mp4">
+  </video>
+</div>
 
 </body>
 </html>
