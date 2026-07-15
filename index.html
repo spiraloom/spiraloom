@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apsu — The Primordial Deep</title>
+<link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel:wght@400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    cursor: url('data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2732%27%20height%3D%2732%27%20viewBox%3D%270%200%2032%2032%27%3E%3Cdefs%3E%3CradialGradient%20id%3D%27g%27%20cx%3D%2750%25%27%20cy%3D%2750%25%27%20r%3D%2750%25%27%3E%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27rgb%28150%2C15%2C12%29%27%20stop-opacity%3D%270.95%27/%3E%3Cstop%20offset%3D%2735%25%27%20stop-color%3D%27rgb%28100%2C8%2C6%29%27%20stop-opacity%3D%270.55%27/%3E%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27rgb%2870%2C5%2C4%29%27%20stop-opacity%3D%270%27/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle%20cx%3D%2716%27%20cy%3D%2716%27%20r%3D%2713%27%20fill%3D%27url%28%23g%29%27/%3E%3Ccircle%20cx%3D%2716%27%20cy%3D%2716%27%20r%3D%272.2%27%20fill%3D%27rgb%28190%2C50%2C40%29%27%20opacity%3D%270.95%27/%3E%3C/svg%3E') 16 16, crosshair;
+    user-select: none;
+  }
+  .video-side {
+    position: fixed;
+    top: 0;
+    height: 100%;
+    width: 38vw;
+    overflow: hidden;
+    background: #000;
+    z-index: 0;
+  }
+  .video-side video {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  #left-side {
+    left: 0;
+  }
+  #left-side video {
+    transform: scaleX(-1);
+  }
+  #right-side {
+    right: 0;
+  }
+
+  /* ── Mobile: single video panel on the left, freeing center space for the orb ── */
+  @media (max-width: 600px){
+    #right-side{ display:none; }
+    #left-side{
+      width: auto;
+      height: 100%;
+      aspect-ratio: 16/9;
+    }
+    #left-side video{
+      height: 100%;
+      width: 100%;
+      object-fit: cover;
+    }
+    #title{ top: 1.3rem; }
+    #title h1{ font-size: 1.1rem; }
+    #hint{ bottom: 1.3rem; }
+  }
+
+  #overlay-canvas{position:fixed;inset:0;display:block;z-index:1}
+
+  #ui{position:fixed;inset:0;pointer-events:none;z-index:20;font-family:"Uncial Antiqua",serif}
+  #title{position:absolute;top:2rem;left:50%;transform:translateX(-50%);text-align:center;white-space:nowrap}
+  #title h1{font-family:"Uncial Antiqua",serif;font-size:clamp(1rem,2.5vw,1.5rem);letter-spacing:.32em;color:#dcc4c0;opacity:.4;text-transform:uppercase}
+  #title p{font-family:"Cinzel",serif;font-size:clamp(.38rem,.9vw,.5rem);letter-spacing:.68em;color:#d4a878;opacity:.65;margin-top:.35rem;text-transform:uppercase}
+  #hint{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);font-family:"Cinzel",serif;font-size:clamp(.38rem,.9vw,.48rem);letter-spacing:.58em;color:#e0c090;opacity:0;text-transform:uppercase;white-space:nowrap;animation:hp 4s ease-in-out 0.6s infinite}
+  @keyframes hp{0%,100%{opacity:0}40%,60%{opacity:.55}}
+</style>
+</head>
+<body>
+
+<div class="video-side" id="left-side">
+  <video autoplay loop muted playsinline>
+    <source src="https://pub-d162b784ec1e4b9480c9426577ad674c.r2.dev/Spiraloom%20background1.mp4" type="video/mp4">
+  </video>
+</div>
+
+<div class="video-side" id="right-side">
+  <video autoplay loop muted playsinline>
+    <source src="https://pub-d162b784ec1e4b9480c9426577ad674c.r2.dev/Spiraloom%20background1.mp4" type="video/mp4">
+  </video>
+</div>
+
+<canvas id="overlay-canvas"></canvas>
+
+<div id="ui">
+  <div id="title"><h1>Apsu</h1><p>The Primordial Deep</p></div>
+  <div id="hint">speak the hymn</div>
+</div>
+
+<script>
+var HYMNS=[
+  {text:"In the beginning there was Nammu the primeval sea mother who gave birth to heaven and earth",source:"Sumerian — Eridu Genesis"},
+  {text:"Tiamat and Apsu their waters were mingled together and no field was formed no marsh was seen",source:"Babylonian — Enuma Elish"},
+  {text:"From the dark waters of Engur all wisdom rises",source:"Sumerian — Temple Hymn of Eridu"},
+  {text:"The heart of the Abzu is a holy place purified by word",source:"Sumerian — Enki and the World Order"},
+  {text:"When on high the heaven had not been named firm ground below had not been called by name then it was that the gods were formed within them",source:"Babylonian — Enuma Elish"},
+  {text:"Who knows the waters knows the names of all things",source:"Sumerian Proverb"},
+  {text:"Holy queen of heaven she of the enduring heart I sing your praise",source:"Sumerian — Hymn to Inanna"},
+  {text:"The word of the deep is water that none can fathom",source:"Sumerian — Hymn to Enki"},
+  {text:"The river carries away but the sea does not fill",source:"Sumerian Proverb"},
+  {text:"The flood swept over and the kingship descended from heaven",source:"Sumerian King List"},
+  {text:"From the horizon of heaven to the zenith of heaven she surveys them all",source:"Sumerian — Hymn to Inanna"},
+  {text:"A loving heart builds a house a hostile heart destroys a house",source:"Sumerian Proverb"},
+  {text:"Where the water goes the reed follows where the wind blows the dust follows",source:"Sumerian Proverb"},
+  {text:"For a mans bliss and woe one looks to his god",source:"Sumerian Proverb"},
+  {text:"Build like a lord work like a slave",source:"Sumerian Proverb"},
+  {text:"The silent one who has followed the path of a god that person is good to his god",source:"Akkadian — Dialogue of Pessimism"},
+  {text:"Before the sky had a name and the earth had a name Apsu the freshwater and Tiamat the saltwater mingled as one",source:"Babylonian — Enuma Elish"},
+  {text:"The old ones fashioned man from clay and breathed into him the breath of the gods",source:"Akkadian — Atrahasis Epic"},
+  {text:"Gilgamesh who saw the deep who knew the ways of the flood before the great deluge",source:"Akkadian — Epic of Gilgamesh"},
+
+  {text:"Nu was the abyss before creation dark and boundless waters holding all that would ever be",source:"Egyptian — Heliopolis Cosmogony"},
+  {text:"I am Atum who came into being alone in Nun before earth or sky existed",source:"Egyptian — Coffin Texts"},
+  {text:"The waters of Nun surrounded the world and from them the first mound of earth arose",source:"Egyptian Creation Myth"},
+  {text:"Osiris rises as the flood rises the river remembers the god it carries",source:"Egyptian — Pyramid Texts"},
+
+  {text:"In the beginning was the Word and the Word was with God and the Word was God",source:"Hebrew — Gospel of John"},
+  {text:"The earth was without form and void and darkness was upon the face of the deep",source:"Hebrew — Genesis"},
+  {text:"And the spirit of God moved upon the face of the waters",source:"Hebrew — Genesis"},
+  {text:"Let there be light and there was light",source:"Hebrew — Genesis"},
+
+  {text:"Rita is the order beneath all order the truth that flows like water and holds the stars in place",source:"Vedic — Rigveda"},
+  {text:"Then there was neither death nor immortality nor any sign of night or day",source:"Vedic — Nasadiya Sukta, Rigveda"},
+  {text:"That one breathed windless by its own impulse other than that was nothing beyond",source:"Vedic — Nasadiya Sukta, Rigveda"},
+  {text:"Darkness there was at first concealed in darkness this all was undiscriminated chaos",source:"Vedic — Nasadiya Sukta, Rigveda"},
+  {text:"From the waters the golden egg arose in it was born the lord of all creation",source:"Vedic — Hiranyagarbha Sukta"},
+
+  {text:"There was no sand no sea no cooling wave earth was not there nor heaven above only a void and yawning gulf",source:"Norse — Voluspa, Poetic Edda"},
+  {text:"Where the cold of Niflheim met the fire of Muspell in the yawning gap the first drops of life took shape",source:"Norse — Prose Edda, Gylfaginning"},
+  {text:"From the body of the slain giant the gods raised up the earth and from his blood they made the sea",source:"Norse — Grimnismal, Poetic Edda"},
+
+  {text:"Heaven and earth were once inextricably commingled like a chicken's egg within which was engendered the coiled one of antiquity",source:"Chinese — Sanwu Liji"},
+  {text:"After eighteen thousand years the murky and the clear divided the light rose to become the sky the heavy sank to become the earth",source:"Chinese Creation Myth"},
+  {text:"His breath became the wind and clouds his voice the rolling thunder his blood became the rivers that run without ceasing",source:"Chinese Creation Myth"},
+
+  {text:"At the beginning there was only Te Kore the nothingness neither light nor darkness nothing existed",source:"Maori Creation Tradition"},
+  {text:"Ranginui the sky and Papatuanuku the earth lay locked together and their children dwelt in darkness between them",source:"Maori Creation Tradition"},
+  {text:"The mist that rises from the forest is the sigh of the earth still grieving for the sky she once held close",source:"Maori Creation Tradition"},
+
+  {text:"First Chaos came to be and after Chaos came broad bosomed Earth the ever sure foundation of all",source:"Greek — Hesiod, Theogony"},
+  {text:"Okeanos the river that encircles the world father of all rivers and of every sea",source:"Greek — Homeric Tradition"},
+  {text:"Out of the yawning void the deep breathed once and the first light was born from darkness",source:"Greek — Orphic Hymns"},
+
+  {text:"Before the world was made Olodumare sent the deep waters and upon them the first solid ground was laid",source:"Yoruba Creation Tradition"},
+  {text:"The chain was lowered from the sky and upon it the first one descended carrying a snail shell of sand",source:"Yoruba — Ifa Tradition"},
+
+  {text:"In the beginning there was only the sky above and the water below and nothing else existed under heaven",source:"Aztec — Codex Chimalpopoca"},
+  {text:"The old gods gathered at the water's edge and cast themselves into the fire so the sun might move again",source:"Aztec Creation Myth, Teotihuacan"},
+
+  {text:"Before there was light there was the remembering of light the waters did not sleep they waited",source:"Aia Medicina, manuscript fragment"},
+  {text:"Every current carried the memory of another current thus the deep became one without ceasing to be many",source:"Aia Medicina, manuscript fragment"},
+  {text:"Fill nothing that has not first been emptied the vessel that refuses the river can never know the sea",source:"Aia Medicina, manuscript fragment"},
+  {text:"Become hollow become listening become carried whoever fears the deep fears their own beginning",source:"Aia Medicina, manuscript fragment"},
+  {text:"Descend not to conquer but to remember fire hidden beneath water burns without consuming",source:"Aia Medicina, manuscript fragment"},
+  {text:"Whoever finds it forgets neither sorrow nor joy breath entered clay clay answered with silence",source:"Aia Medicina, manuscript fragment"},
+  {text:"The silence became a name the hand that descends empty returns bearing fire",source:"Aia Medicina, manuscript fragment"},
+];
+
+var canvas=document.getElementById('overlay-canvas');
+var ctx=canvas.getContext('2d');
+var W,H,T=0;
+var DPR=Math.min(window.devicePixelRatio||1,2);
+function resize(){
+  W=window.innerWidth;
+  H=window.innerHeight;
+  canvas.width=Math.round(W*DPR);
+  canvas.height=Math.round(H*DPR);
+  canvas.style.width=W+'px';
+  canvas.style.height=H+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  placeAmbientOrb();
+}
+window.addEventListener('resize',resize);
+
+var IRIS=[
+  [235,215,220],[200,90,85],[140,25,20],[230,170,150],
+  [110,140,220],[220,180,90],[180,60,50],[240,230,235]
+];
+function irisCol(v){
+  v=((v%1)+1)%1;
+  var f=v*IRIS.length,i=Math.floor(f),fr=f-i;
+  var a=IRIS[i%IRIS.length],b=IRIS[(i+1)%IRIS.length];
+  return [Math.round(a[0]+(b[0]-a[0])*fr),Math.round(a[1]+(b[1]-a[1])*fr),Math.round(a[2]+(b[2]-a[2])*fr)];
+}
+var ETCH=[200,170,118];
+
+var SIGNS=[
+  [[-0.6,-0.6,0.6,0.6],[0.6,-0.6,-0.6,0.6],[-0.7,0,0.7,0],[0,-0.7,0,0.7]],
+  [[-0.7,-0.35,0.7,-0.35],[-0.7,0,0.7,0],[-0.7,0.35,0.7,0.35],[0.55,-0.35,0.55,0.6]],
+  [[-0.7,0,0.7,0],[0,-0.7,0,0.7],[-0.5,-0.5,0.5,0.5],[0.5,-0.5,-0.5,0.5]],
+  [[-0.6,-0.4,0.6,-0.4],[-0.6,0,0.6,0],[-0.6,0.4,0.6,0.4],[0.5,-0.4,0.5,0.6]],
+  [[0,-0.7,0,0.7],[-0.55,-0.15,0.05,-0.15],[-0.45,0.25,0.05,0.25]],
+  [[-0.6,-0.6,-0.6,0.6],[-0.6,0.6,0.6,0.6],[0.1,-0.2,0.1,0.6]],
+  [[-0.7,0.3,0,0],[0,-0.65,0,0],[0.7,0.3,0,0],[0,0,0,0.5]],
+  [[-0.75,0,0.75,0],[0,0,0,0.65],[-0.4,0.3,0.4,0.3]],
+  [[0,-0.6,0.5,0.2],[0.5,0.2,-0.5,0.2],[-0.5,0.2,0,-0.6],[0,0.2,0,0.6]],
+  [[-0.6,-0.3,0.6,-0.3],[-0.3,-0.6,-0.3,0.6],[0.3,-0.6,0.3,0.6]],
+  [[-0.5,-0.5,0.5,-0.5],[0.5,-0.5,0.5,0.5],[0.5,0.5,-0.5,0.5],[-0.5,0.5,-0.5,-0.5]],
+  [[0,-0.7,-0.5,0.3],[0,-0.7,0.5,0.3],[-0.3,0,0.3,0]],
+];
+
+function drawEtchedSign(sign,cx,cy,size,alpha,col,squish){
+  if(alpha<=0.01)return;
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.scale(1,squish);
+  ctx.globalAlpha=alpha;
+  ctx.strokeStyle='rgb('+col[0]+','+col[1]+','+col[2]+')';
+  ctx.lineWidth=Math.max(0.6,size*0.09);
+  ctx.lineCap='round';
+  ctx.beginPath();
+  for(var i=0;i<sign.length;i++){
+    var s=sign[i];
+    ctx.moveTo(s[0]*size,s[1]*size);
+    ctx.lineTo(s[2]*size,s[3]*size);
+  }
+  ctx.stroke();
+  ctx.fillStyle='rgb('+col[0]+','+col[1]+','+col[2]+')';
+  for(var j=0;j<sign.length;j++){
+    var s2=sign[j];
+    ctx.beginPath();
+    ctx.arc(s2[0]*size,s2[1]*size,Math.max(0.7,size*0.10),0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function buildOrb(){
+  var pts=[];
+  var rows=13;
+  for(var r=1;r<rows;r++){
+    var lat=(r/rows)*Math.PI;
+    var ringR=Math.sin(lat);
+    var count=Math.max(3,Math.round(ringR*22));
+    for(var c2=0;c2<count;c2++){
+      pts.push({
+        lat:lat, lon:(c2/count)*Math.PI*2+(r%2)*0.15,
+        sign:Math.floor(Math.random()*SIGNS.length),
+        jitter:Math.random()*0.06-0.03
+      });
+    }
+  }
+  return pts;
+}
+
+// ── PERSISTENT AMBIENT ORB ──
+var ambientOrb={
+  x:0, y:0,
+  pts:buildOrb(),
+  R:0,
+  rot0:Math.random()*Math.PI*2,
+  age:0,
+  _lastPts:[]
+};
+// ── SILENCE STATE — rare unscheduled pauses, the deep going still ──
+var silence={
+  active:false,
+  age:0,
+  duration:0,
+  nextCheck:1800+Math.random()*2400 // ~30-70s until first possible silence
+};
+function updateSilence(){
+  if(silence.active){
+    silence.age++;
+    if(silence.age>silence.duration){
+      silence.active=false;
+      silence.nextCheck=ambientOrb.age+2400+Math.random()*3600; // next silence in ~40-100s
+    }
+  } else if(ambientOrb.age>=silence.nextCheck && !conjuring && !hymnEvent){
+    silence.active=true;
+    silence.age=0;
+    silence.duration=260+Math.random()*220; // ~4-8s of stillness
+  }
+}
+function silenceFactor(){
+  // returns 0 (full silence/still) to 1 (normal) - eases in and out smoothly
+  if(!silence.active)return 1;
+  var t=silence.age/silence.duration;
+  var dip=Math.sin(t*Math.PI); // 0 at edges, 1 at middle of the pause
+  return 1-dip*0.88; // never fully vanish, just deeply quiet
+}
+
+function placeAmbientOrb(){
+  var isMobile = W<=600;
+  var R=Math.min(W,H)*0.20;
+  if(isMobile){
+    var videoW = H * (16/9);
+    var remaining = W - videoW;
+    var centerOfRemaining = videoW + Math.max(remaining,0)*0.5;
+    // clamp so the orb's full circle (center +/- R) always stays on screen
+    var minX = videoW + R*1.15; // keep clear of video edge
+    var maxX = W - R*1.15;
+    if(minX > maxX){
+      // not enough room — center in whatever space exists, shrink R if needed
+      ambientOrb.x = W*0.5;
+      R = Math.min(R, (W*0.45));
+    } else {
+      ambientOrb.x = Math.min(Math.max(centerOfRemaining, minX), maxX);
+    }
+    ambientOrb.y = H*0.50;
+  } else {
+    ambientOrb.x = W/2;
+    ambientOrb.y = H*0.42;
+  }
+  ambientOrb.R=R;
+}
+
+function drawAmbientOrb(){
+  var cx=ambientOrb.x, cy=ambientOrb.y;
+  var R=ambientOrb.R;
+  ambientOrb.age++;
+  var age=ambientOrb.age;
+  updateSilence();
+  var sf=silenceFactor(); // 1 = normal, approaches ~0.12 at deepest silence
+
+  var conjureBoost=0;
+  if(typeof conjuring!=='undefined' && conjuring){
+    // breath curve: eases in, peaks near the end, giving a gathering-inward feel
+    var ct=conjuring.age/conjuring.maxAge;
+    conjureBoost=Math.sin(ct*Math.PI*0.5); // smooth 0->1 ease-in
+  }
+
+
+  var halo=ctx.createRadialGradient(cx,cy-R*0.25,R*0.3,cx,cy-R*0.25,R*1.7);
+  halo.addColorStop(0,'rgba(125,95,62,'+(0.13*sf)+')');
+  halo.addColorStop(0.55,'rgba(80,58,38,'+(0.06*sf)+')');
+  halo.addColorStop(1,'rgba(40,28,18,0)');
+  ctx.beginPath();ctx.arc(cx,cy-R*0.25,R*1.7,0,Math.PI*2);
+  ctx.fillStyle=halo;ctx.fill();
+
+
+
+  var body=ctx.createRadialGradient(cx-R*0.25,cy-R*0.35,R*0.1,cx,cy,R);
+  body.addColorStop(0,'rgba(36,28,22,'+(0.38*Math.max(sf,0.7))+')');
+  body.addColorStop(0.6,'rgba(20,15,12,'+(0.42*Math.max(sf,0.7))+')');
+  body.addColorStop(1,'rgba(6,4,3,'+(0.30*Math.max(sf,0.7))+')');
+  ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.fillStyle=body;ctx.fill();
+
+  var rim=ctx.createLinearGradient(cx,cy-R,cx,cy+R);
+  rim.addColorStop(0,'rgba(155,122,80,'+(0.32*sf)+')');
+  rim.addColorStop(0.5,'rgba(90,68,44,'+(0.1*sf)+')');
+  rim.addColorStop(1,'rgba(40,30,20,'+(0.04*sf)+')');
+  ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.strokeStyle=rim;ctx.lineWidth=1.1;ctx.stroke();
+
+  var rotSpeed=(0.0016+conjureBoost*0.0018)*sf; // rotation nearly stops during silence
+  var rot=ambientOrb.rot0+age*rotSpeed;
+  var shimmerLon=age*(0.006+conjureBoost*0.006)*sf;
+
+  var activePts=[];
+  for(var i=0;i<ambientOrb.pts.length;i++){
+    var p=ambientOrb.pts[i];
+    var lon=p.lon+rot;
+    var x3=Math.sin(p.lat)*Math.cos(lon);
+    var z3=Math.sin(p.lat)*Math.sin(lon);
+    var y3=Math.cos(p.lat);
+    if(z3<-0.12)continue;
+
+    var px=cx+x3*R;
+    var py=cy+y3*R*0.98;
+    var depthA=0.25+Math.max(0,z3)*0.75;
+    var squish=0.55+Math.abs(Math.sin(p.lat))*0.45;
+    var size=R*0.055*(0.7+z3*0.35);
+
+    var col=[ETCH[0]+p.jitter*90,ETCH[1]+p.jitter*70,ETCH[2]+p.jitter*55];
+    var shimDist=Math.abs(((lon-shimmerLon)%(Math.PI*2)+Math.PI*3)%(Math.PI*2)-Math.PI);
+    var shim=Math.max(0,1-shimDist/0.7)*sf;
+    if(shim>0.02){
+      var sc2=irisCol(p.lat*0.4+age*0.002);
+      col=[col[0]+(sc2[0]-col[0])*shim*0.75,
+           col[1]+(sc2[1]-col[1])*shim*0.75,
+           col[2]+(sc2[2]-col[2])*shim*0.75];
+    }
+    col=[Math.round(col[0]),Math.round(col[1]),Math.round(col[2])];
+    var alpha=depthA*(0.82+shim*0.18)*Math.max(sf,0.35);
+    alpha=Math.min(1,alpha);
+    drawEtchedSign(SIGNS[p.sign],px,py,size,alpha,col,squish);
+    activePts.push({px:px,py:py,sign:p.sign,col:col});
+  }
+  ambientOrb._lastPts=activePts;
+}
+
+// ── HYMN BURST ──
+var hymnEvent=null;
+
+var hymnBag=[];
+function pickHymn(){
+  if(hymnBag.length===0){
+    hymnBag = HYMNS.map(function(_,i){return i;});
+    // Fisher-Yates shuffle
+    for(var i=hymnBag.length-1;i>0;i--){
+      var j=Math.floor(Math.random()*(i+1));
+      var tmp=hymnBag[i]; hymnBag[i]=hymnBag[j]; hymnBag[j]=tmp;
+    }
+  }
+  var idx=hymnBag.pop();
+  return HYMNS[idx];
+}
+
+function easeOut(t){return 1-Math.pow(1-t,3);}
+function easeInOut(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+
+function layoutWordTargets(words){
+  var glyphSize=Math.min(W,H)*0.027;
+  var gapX=glyphSize*1.25;
+  var wordGap=glyphSize*0.85;
+  var lineGap=glyphSize*1.9;
+  var maxLineWidth=Math.min(W*0.72,860);
+
+  var lines=[[]];
+  var curW=0;
+  words.forEach(function(w){
+    var wWidth=w.length*gapX;
+    if(curW+wWidth>maxLineWidth && lines[lines.length-1].length>0){
+      lines.push([]); curW=0;
+    }
+    lines[lines.length-1].push(w);
+    curW+=wWidth+wordGap;
+  });
+
+  var totalH=lines.length*lineGap;
+  var srcReserve=Math.min(W,H)*0.11; // space reserved below hymn for source line
+  var bottomLimit=H-Math.min(W,H)*0.14; // keep clear of bottom hint text
+  var idealCenter=H*0.68;
+  var maxCenter=bottomLimit-srcReserve-totalH/2;
+  var centerY=Math.min(idealCenter,maxCenter);
+  var startY=centerY-totalH/2+lineGap/2;
+  var targets=[];
+  lines.forEach(function(line,li){
+    var lineWidth=0;
+    line.forEach(function(w){lineWidth+=w.length*gapX+wordGap;});
+    lineWidth-=wordGap;
+    var x=W/2-lineWidth/2;
+    var y=startY+li*lineGap;
+    line.forEach(function(w){
+      for(var ci=0;ci<w.length;ci++){
+        targets.push({x:x+glyphSize*0.5,y:y,ch:w[ci],glyphSize:glyphSize});
+        x+=gapX;
+      }
+      x+=wordGap;
+    });
+  });
+  return targets;
+}
+
+var conjuring=null; // {age, maxAge, pendingHymnData}
+
+function triggerHymn(){
+  if(hymnEvent && hymnEvent.age<hymnEvent.maxAge*0.85)return;
+  if(conjuring)return;
+  var h=pickHymn();
+  conjuring={age:0,maxAge:150,pending:h};
+}
+
+function launchHymnParticles(h){
+  var words=h.text.split(' ');
+  var sourcePts=ambientOrb._lastPts.length?ambientOrb._lastPts:[{px:ambientOrb.x,py:ambientOrb.y}];
+  var targets=layoutWordTargets(words);
+  var particles=[];
+  for(var i=0;i<targets.length;i++){
+    var sp=sourcePts[i%sourcePts.length];
+    particles.push({sx:sp.px,sy:sp.py});
+  }
+  hymnEvent={
+    words:words,
+    source:h.source,
+    age:0,
+    formEnd:150,
+    holdEnd:340,
+    maxAge:410,
+    particles:particles,
+    _targets:targets
+  };
+}
+
+function updateConjuring(){
+  if(!conjuring)return;
+  conjuring.age++;
+  if(conjuring.age>=conjuring.maxAge){
+    launchHymnParticles(conjuring.pending);
+    conjuring=null;
+  }
+}
+
+function drawHymnEvent(){
+  if(!hymnEvent)return;
+  hymnEvent.age++;
+  if(hymnEvent.age>hymnEvent.maxAge){hymnEvent=null;return;}
+  var age=hymnEvent.age;
+  var targets=hymnEvent._targets;
+
+  // breath-like emergence: slow drift outward first, then gentle settle into position
+  var streamT=Math.min(1,age/hymnEvent.formEnd);
+  // custom "breath" easing: slow start, drift, then soft settle (not a hard curve)
+  var eased = streamT<0.5
+    ? 2*streamT*streamT           // slow gentle acceleration outward
+    : 1-Math.pow(-2*streamT+2,2)/2; // soft settle into place
+
+  var fadeOut=1;
+  if(age>hymnEvent.holdEnd){
+    fadeOut=1-easeInOut((age-hymnEvent.holdEnd)/(hymnEvent.maxAge-hymnEvent.holdEnd));
+  }
+
+  var hueBase=T*0.0015;
+
+  for(var i=0;i<targets.length;i++){
+    var t=targets[i];
+    var p=hymnEvent.particles[i%hymnEvent.particles.length];
+
+    var x=p.sx+(t.x-p.sx)*eased;
+    var y=p.sy+(t.y-p.sy)*eased;
+    if(eased>=0.999){ x=Math.round(t.x); y=Math.round(t.y); }
+
+    var col=ETCH;
+
+    ctx.save();
+    ctx.globalAlpha=fadeOut*(0.35+eased*0.65);
+    ctx.font=(Math.round(t.glyphSize*1.15))+'px "Cinzel", serif';
+    ctx.fillStyle='rgb('+col[0]+','+col[1]+','+col[2]+')';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText(t.ch,x,y);
+    ctx.restore();
+  }
+
+  // source attribution beneath the hymn
+  if(hymnEvent.source && targets.length){
+    var maxY=0;
+    targets.forEach(function(t2){if(t2.y>maxY)maxY=t2.y;});
+    var srcAlpha=fadeOut*Math.min(1,Math.max(0,(age-hymnEvent.formEnd)/30));
+    ctx.save();
+    ctx.globalAlpha=srcAlpha*0.85;
+    var srcSize=Math.round(Math.max(12,Math.min(W,H)*0.017));
+    ctx.font='italic '+srcSize+'px "Cinzel", serif';
+    ctx.fillStyle='rgb('+ETCH[0]+','+ETCH[1]+','+ETCH[2]+')';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText('— '+hymnEvent.source+' —', Math.round(W/2), Math.round(maxY+Math.min(W,H)*0.07));
+    ctx.restore();
+  }
+}
+
+// ── CURSOR TRAIL — faint wisp following the mote ──
+var trail=[];
+function addTrailPoint(x,y){
+  trail.push({x:x,y:y,age:0});
+  if(trail.length>40)trail.shift();
+}
+canvas.addEventListener('mousemove',function(e){addTrailPoint(e.clientX,e.clientY);});
+canvas.addEventListener('touchmove',function(e){
+  var t=e.touches[0];
+  if(t)addTrailPoint(t.clientX,t.clientY);
+},{passive:true});
+
+function drawCursorTrail(){
+  for(var i=trail.length-1;i>=0;i--){
+    trail[i].age++;
+    if(trail[i].age>36){trail.splice(i,1);}
+  }
+  if(trail.length<2)return;
+  var BLOOD=[110,10,8];
+  for(var j=0;j<trail.length-1;j++){
+    var p=trail[j];
+    var lifeT=1-(p.age/36);
+    var alpha=lifeT*lifeT*0.20;
+    var r=3.2*lifeT+0.6; // looser, wider spread than before
+    var wobX=Math.sin(p.age*0.15+j)*2.2*(1-lifeT);
+    var wobY=Math.cos(p.age*0.12+j)*2.2*(1-lifeT);
+    ctx.beginPath();
+    ctx.arc(p.x+wobX,p.y+wobY,r,0,Math.PI*2);
+    ctx.fillStyle='rgba('+BLOOD[0]+','+BLOOD[1]+','+BLOOD[2]+','+alpha+')';
+    ctx.fill();
+  }
+}
+
+function drawFrame(){
+  T++;
+  ctx.clearRect(0,0,W,H);
+  updateConjuring();
+  drawAmbientOrb();
+  drawCursorTrail();
+  drawHymnEvent();
+  requestAnimationFrame(drawFrame);
+}
+
+resize();
+drawFrame();
+
+canvas.addEventListener('click',function(e){triggerHymn();});
+canvas.addEventListener('touchstart',function(e){e.preventDefault();triggerHymn();},{passive:false});
+window.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' ')triggerHymn();});
+</script>
+</body>
+</html>
