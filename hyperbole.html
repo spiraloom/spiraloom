@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hyperbole of the Soul</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Fondamento:ital@0;1&family=Cinzel:wght@400;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html,body{ background:#07080c; min-height:100%; }
+  /* ---- looping video veil beneath everything ---- */
+  #veil-video{
+    position:fixed; inset:0; width:100vw; height:100vh; object-fit:cover;
+    z-index:-2; pointer-events:none;
+  }
+  #video-scrim{ /* only a breath of shade, so the words stay legible over the film */
+    position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background:
+      radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(7,8,12,.34) 82%, rgba(7,8,12,.6) 100%),
+      linear-gradient(rgba(10,8,12,.14), rgba(7,8,12,.18));
+  }
+  body{
+    font-family:"EB Garamond",serif; color:#cfd6de; overflow-x:hidden;
+    background:
+      radial-gradient(ellipse at 50% 12%, rgba(90,20,26,.16), transparent 55%),
+      radial-gradient(ellipse at 50% 105%, rgba(30,60,54,.14), transparent 60%),
+      #07080c;
+  }
+
+  /* ---- return link, in the house style ---- */
+  #return-house{
+    position:fixed; top:1.2rem; left:1.4rem; z-index:30;
+    font-size:.55rem; letter-spacing:.42em; text-transform:uppercase;
+    color:rgba(224,196,150,.72); text-decoration:none; transition:color .4s ease;
+    font-family:"Cinzel",serif;
+  }
+  #return-house:hover{ color:#e8d4a4; }
+
+  /* ---- the invocation ---- */
+  #invocation{
+    text-align:center; padding:4.6rem 1rem 0; position:relative; z-index:5;
+  }
+  #invocation::before{ /* a soft breath of light the letters live inside */
+    content:""; position:absolute; left:50%; top:58%; width:min(92vw,880px); height:150%;
+    transform:translate(-50%,-50%); pointer-events:none; z-index:-1;
+    background:radial-gradient(ellipse at center, rgba(120,30,34,.5), rgba(80,26,50,.22) 48%, transparent 74%);
+    filter:blur(26px);
+    animation:halo-breathe 5.5s ease-in-out infinite;
+  }
+  @keyframes halo-breathe{ 0%,100%{ opacity:.65; } 50%{ opacity:1; } }
+  #invocation h1{
+    font-family:"Fondamento","Uncial Antiqua",serif; font-weight:400; font-style:italic;
+    font-size:clamp(1.9rem, 5.4vw, 3.4rem); line-height:1.45;
+    letter-spacing:.05em;
+    /* letters of light, not paint: luminous fill + screen-blend melts them into the page */
+    mix-blend-mode:screen;
+    background:linear-gradient(178deg,
+      rgba(255,236,200,.98) 0%, rgba(240,196,150,.92) 26%,
+      rgba(255,170,150,.88) 52%, rgba(235,185,140,.92) 76%, rgba(255,232,196,.98) 100%);
+    background-size:100% 260%;
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent; color:transparent;
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,.95))
+           drop-shadow(0 0 14px rgba(200,60,55,.5))
+           drop-shadow(0 0 40px rgba(170,50,70,.3));
+    animation:invoke-breathe 5.5s ease-in-out infinite, metal-sheen 11s ease-in-out infinite;
+  }
+  #invocation h1 .l2{ display:block; font-size:.8em; margin-top:.4em; letter-spacing:.12em; }
+  @keyframes invoke-breathe{
+    0%,100%{ filter:drop-shadow(0 2px 2px rgba(0,0,0,.95))
+             drop-shadow(0 0 12px rgba(200,60,55,.45))
+             drop-shadow(0 0 36px rgba(170,50,70,.25)); }
+    50%{ filter:drop-shadow(0 2px 2px rgba(0,0,0,.95))
+         drop-shadow(0 0 22px rgba(255,100,80,.85))
+         drop-shadow(0 0 64px rgba(210,70,100,.45)); }
+  }
+  @keyframes metal-sheen{
+    0%,100%{ background-position:50% 0%; }
+    50%{ background-position:50% 100%; }
+  }
+
+  /* ---- the mirror ---- */
+  #mirror-stage{
+    position:relative; margin:1.4rem auto 0; width:min(92vw, 78vh, 760px);
+    z-index:2;
+  }
+  #mirror-frame{
+    position:relative; width:100%; padding-top:146.1%; /* image aspect 1100x1607 */
+  }
+
+  /* ---- the glass: overlays clipped to the liquid ellipse ----
+     ellipse centre 48.5% / 47.5%, rx 40% of width, ry 27.5% of height */
+  .glass{ /* the mirror now lives in the video: a centred ellipse over its liquid */
+    position:absolute; left:9%; top:26%; width:82%; height:48%;
+    border-radius:50%; overflow:hidden;
+  }
+  .glass.interactive{ cursor:pointer; }
+  #conjure-cv{ position:absolute; inset:0; pointer-events:none; }
+
+  /* ---- the sayings, surfacing in the liquid ---- */
+  .saying{
+    position:absolute; left:50%; top:50%; width:84%;
+    transform:translate(-50%,-50%);
+    text-align:center; pointer-events:none;
+    font-family:"EB Garamond",serif; font-style:italic; font-weight:500;
+    font-size:clamp(1.15rem, 3.6vw, 2rem); line-height:1.5;
+    color:#fff2ec;
+    text-shadow:
+      0 0 8px rgba(255,190,180,.95),
+      0 0 18px rgba(255,120,110,.85),
+      0 0 40px rgba(255,80,90,.55),
+      0 0 78px rgba(200,120,255,.32),
+      0 2px 4px rgba(0,0,0,.95);
+    opacity:0; filter:blur(14px);
+    /* 2s of stillness while the wisps gather, then 9s of surfacing */
+    animation:surface 9s ease-in-out 2s forwards;
+  }
+  @keyframes surface{
+    0%{ opacity:0; filter:blur(14px); transform:translate(-50%,-40%) scale(.9); }
+    14%{ opacity:.08; filter:blur(11px); }
+    30%{ opacity:1; filter:blur(.5px); transform:translate(-50%,-50%) scale(1); }
+    72%{ opacity:.96; filter:blur(.7px); transform:translate(-50%,-55%) scale(1.015); }
+    100%{ opacity:0; filter:blur(14px); transform:translate(-50%,-66%) scale(1.05); }
+  }
+
+  /* ---- hint ---- */
+  #hint{
+    text-align:center; margin:1.6rem 0 4rem;
+    font-family:"Cinzel",serif; font-size:.56rem; letter-spacing:.44em; text-transform:uppercase;
+    color:rgba(200,160,150,.55);
+    animation:hint-pulse 4s ease-in-out infinite;
+  }
+  @keyframes hint-pulse{ 0%,100%{ opacity:.55; } 50%{ opacity:1; } }
+
+  @media (prefers-reduced-motion:reduce){
+    #invocation h1, #mirror-stage::before, #hint{ animation:none; }
+    .saying{ animation:surface-static 9s ease forwards; }
+    @keyframes surface-static{
+      0%{ opacity:0; } 12%{ opacity:1; filter:blur(0); transform:translate(-50%,-50%); }
+      80%{ opacity:1; } 100%{ opacity:0; }
+    }
+  }
+</style>
+</head>
+<body>
+
+<video id="veil-video" autoplay muted loop playsinline preload="auto"
+  src="https://pub-d162b784ec1e4b9480c9426577ad674c.r2.dev/0717-02.mp4"></video>
+<div id="video-scrim"></div>
+
+<a id="return-house" href="tablet-house.html">&#8592; The Tablet House</a>
+
+<div id="invocation">
+  <h1>Mirror, mirror, what is my role?<span class="l2">Hyperbole of my soul.</span></h1>
+</div>
+
+<div id="mirror-stage">
+  <div id="mirror-frame">
+    <div class="glass interactive" id="glass">
+      <canvas id="conjure-cv"></canvas>
+    </div>
+  </div>
+</div>
+
+<div id="hint">touch the glass, and the liquid will answer</div>
+
+<script>
+(function(){
+  var SAYINGS = ["The raccoons have elected a king, but your taxes remain unaffected.", "Your houseplants have unanimously agreed that you are trying your best.", "The moon accepted your apology, though it insists it wasn't offended.", "The crows are discussing breadcrumbs, not your life choices.", "Your missing sock has begun a pilgrimage of great spiritual significance.", "The squirrel was not laughing at you. It was laughing near you.", "The universe did not delay your toast to build your character.", "Your coffee has filed a complaint regarding Mondays.", "The chair bears no grudge for yesterday's collision.", "The stars appreciate that you finally looked up.", "The snail has challenged no one; it simply refuses to hurry.", "Your cat has mistaken you for competent. Treasure the moment.", "The clouds are improvising. They are not spelling your name.", "The ducks approved your outfit with dignified silence.", "The wind borrowed your worries and forgot to return them.", "Your shadow occasionally auditions for dramatic roles.", "The mushrooms know something, but they're terrible at interviews.", "The robin outside is not critiquing your singing; it is simply overconfitted.", "The teapot believes every afternoon deserves ceremony.", "The universe politely requests that you stop assuming every coincidence is about you."];
+
+  /* ---- shuffle bag: every saying surfaces once before any repeats ---- */
+  var bag = [];
+  function draw(){
+    if(bag.length === 0){
+      bag = SAYINGS.slice();
+      for(var i=bag.length-1;i>0;i--){
+        var j = Math.floor(Math.random()*(i+1)), t = bag[i]; bag[i]=bag[j]; bag[j]=t;
+      }
+    }
+    return bag.pop();
+  }
+
+  var glass = document.getElementById('glass');
+  var busyUntil = 0;
+
+  /* ---- make sure the film runs: retry play on load and on first touch ---- */
+  var vid = document.getElementById('veil-video');
+  function tryPlay(){ if(vid && vid.paused){ var p = vid.play(); if(p && p.catch) p.catch(function(){}); } }
+  window.addEventListener('load', tryPlay);
+  document.addEventListener('pointerdown', tryPlay, { once:true });
+  tryPlay();
+
+  /* ---- the wisps: born in the liquid, gathering into words ----
+     same creatures as the Tablet House hero, warmed to this liquid's light */
+  var cv = document.getElementById('conjure-cv'), cx = cv.getContext('2d'), W, H;
+  function resize(){ W = cv.width = cv.offsetWidth; H = cv.height = cv.offsetHeight; }
+  window.addEventListener('resize', resize); resize();
+  window.addEventListener('load', resize);
+  var wisps = [];
+  var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  function ease(p){ return p<.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2; }
+
+  function spawnGather(){
+    resize();  /* fresh geometry: the text and the wisps must agree on the page */
+    /* rise from the deep liquid, converge tightly onto the words' own box:
+       the saying sits centred at (50%, 52%) spanning ~76% x ~22% of the glass */
+    for(var i=0;i<38;i++){
+      var a = Math.random()*6.28, rr = .55+Math.pow(Math.random(),.7)*.42;
+      var ta = Math.random()*6.28, tr = Math.pow(Math.random(),.7);
+      wisps.push({
+        sx: W*.5 + Math.cos(a)*rr*W*.46,
+        sy: H*.5 + Math.sin(a)*rr*H*.46,
+        tx: W*.5 + Math.cos(ta)*tr*W*.3,
+        ty: H*.5 + Math.sin(ta)*tr*H*.1,
+        born: performance.now(), T: 2100+Math.random()*1100,
+        r:.7+Math.random()*1.8, w:Math.random()*6.28,
+        mode:'gather'
+      });
+    }
+  }
+  function spawnScatter(){
+    resize();
+    for(var i=0;i<20;i++){
+      var ta = Math.random()*6.28, tr = Math.pow(Math.random(),.7);
+      var x = W*.5 + Math.cos(ta)*tr*W*.3, y = H*.5 + Math.sin(ta)*tr*H*.1;
+      wisps.push({
+        sx:x, sy:y,
+        tx:x+(Math.random()-.5)*W*.5,
+        ty:y-(.15+Math.random()*.3)*H,
+        born: performance.now(), T: 2100+Math.random()*1200,
+        r:.6+Math.random()*1.4, w:Math.random()*6.28,
+        mode:'scatter'
+      });
+    }
+  }
+
+  function frame(t){
+    cx.clearRect(0,0,W,H);
+    for(var i=wisps.length-1;i>=0;i--){
+      var m = wisps[i];
+      var p = (t - m.born)/m.T;
+      if(p>=1){ wisps.splice(i,1); continue; }
+      var e = ease(p);
+      var x = m.sx + (m.tx-m.sx)*e + Math.sin(t*.003 + m.w)*4;
+      var y = m.sy + (m.ty-m.sy)*e + Math.cos(t*.0026 + m.w*2)*3;
+      /* gather: brighten then hand the light to the words; scatter: fade away */
+      var al = m.mode==='gather'
+        ? (p<.55 ? p/.55 : 1-(p-.55)/.45) * .8
+        : (1-p)*.6;
+      var tw = .65 + .35*Math.sin(t*.0014 + m.w*3);
+      al *= tw;
+      var g = cx.createRadialGradient(x,y,0,x,y,m.r*4.5);
+      g.addColorStop(0,'rgba(255,214,205,'+(al).toFixed(3)+')');
+      g.addColorStop(.35,'rgba(255,150,150,'+(al*.5).toFixed(3)+')');
+      g.addColorStop(1,'rgba(220,110,140,0)');
+      cx.beginPath(); cx.arc(x,y,m.r*4.5,0,6.28); cx.fillStyle=g; cx.fill();
+      cx.beginPath(); cx.arc(x,y,m.r*.9,0,6.28);
+      cx.fillStyle='rgba(255,246,242,'+(al*.95).toFixed(3)+')'; cx.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  function conjure(){
+    var now = Date.now();
+    if(now < busyUntil) return;
+    busyUntil = now + 7200;
+    if(!reduced) spawnGather();
+    var el = document.createElement('div');
+    el.className = 'saying';
+    el.textContent = draw();
+    glass.appendChild(el);
+    if(!reduced) setTimeout(spawnScatter, 8800);  /* the words return to wisps */
+    setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 11400);
+  }
+
+  glass.addEventListener('click', conjure);
+})();
+</script>
+</body>
+</html>
