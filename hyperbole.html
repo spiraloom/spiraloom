@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mirror, Mirror</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html{ background:#05060a; min-height:100%; }
+  body{ background:transparent; min-height:100vh; overflow:hidden; font-family:"Cormorant Garamond",serif; }
+
+  /* ---- return link, in the house style ---- */
+  #return-house{
+    position:fixed; top:1.2rem; left:1.4rem; z-index:40;
+    font-family:"Cinzel",serif;
+    font-size:.55rem; letter-spacing:.42em; text-transform:uppercase;
+    color:rgba(224,196,150,.72); text-decoration:none; transition:color .4s ease;
+  }
+  #return-house:hover{ color:#e8d4a4; }
+
+  /* ---- full-bleed background film ---- */
+  #bg-video{
+    position:fixed; inset:0; width:100vw; height:100vh; object-fit:cover;
+    z-index:-2; pointer-events:none;
+  }
+  #bg-tint{ /* the faintest settling of the palette, so text stays legible */
+    position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background:
+      radial-gradient(ellipse at 50% 42%, transparent 42%, rgba(5,6,10,.28) 84%, rgba(5,6,10,.55) 100%),
+      linear-gradient(rgba(6,6,12,.12), rgba(5,6,10,.2));
+  }
+
+  /* ---- the invocation ---- */
+  #invocation{
+    position:fixed; top:8.5vh; left:0; right:0; z-index:10;
+    text-align:center; pointer-events:none;
+  }
+  #invocation h1{
+    font-family:"Cormorant Garamond",serif; font-weight:500; font-style:italic;
+    font-size:clamp(2.2rem, 6.4vw, 4.6rem); letter-spacing:.1em; line-height:1.2;
+    /* marcasite silver, with an inky tendril-dark woven through the low tones */
+    background:linear-gradient(105deg,
+      #3a3f4a 0%, #8b95a2 14%, #cdd6de 30%, #ffffff 42%,
+      #b9c2cb 52%, #4a5059 63%, #c2ccd4 78%, #575e69 100%);
+    background-size:300% 100%;
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent; color:transparent;
+    /* the tentacle feel: a dark organic outline + soft writhing displacement */
+    filter:url(#ink) drop-shadow(0 0 1px rgba(20,24,30,.9))
+           drop-shadow(0 1px 1px rgba(0,0,0,.7))
+           drop-shadow(0 0 14px rgba(180,205,230,.5))
+           drop-shadow(0 0 38px rgba(140,175,215,.32));
+    animation:sheen 7s ease-in-out infinite, breathe 6s ease-in-out infinite, writhe 9s ease-in-out infinite;
+  }
+  @keyframes writhe{
+    0%,100%{ letter-spacing:.1em; transform:skewX(0deg); }
+    25%{ letter-spacing:.115em; transform:skewX(-1.2deg); }
+    50%{ letter-spacing:.095em; transform:skewX(.8deg); }
+    75%{ letter-spacing:.12em; transform:skewX(-.6deg); }
+  }
+  @keyframes sheen{
+    0%,100%{ background-position:0% 0%; }
+    50%{ background-position:100% 0%; }
+  }
+  @keyframes breathe{
+    0%,100%{ filter:drop-shadow(0 1px 1px rgba(0,0,0,.65))
+             drop-shadow(0 0 10px rgba(190,210,230,.45))
+             drop-shadow(0 0 26px rgba(150,180,215,.28)); }
+    50%{ filter:drop-shadow(0 1px 1px rgba(0,0,0,.65))
+             drop-shadow(0 0 22px rgba(220,235,255,.9))
+             drop-shadow(0 0 56px rgba(170,200,235,.5)); }
+  }
+
+  /* ---- the floating mirror film ---- */
+  #mirror-wrap{
+    position:fixed; left:50%; top:54%; transform:translate(-50%,-50%);
+    z-index:5; height:min(74vh, 92vw); aspect-ratio:3/4;
+    pointer-events:none;
+    animation:levitate 7s ease-in-out infinite;
+  }
+  @keyframes levitate{
+    0%,100%{ transform:translate(-50%,-50%) translateY(0); }
+    50%{ transform:translate(-50%,-50%) translateY(-14px); }
+  }
+  #mirror-video{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:contain;
+    /* multiply knocks the white backing out against the dark film while keeping
+       the dark ornate frame and the reflective glass; the background shows through */
+    mix-blend-mode:multiply;
+    /* tight oval mask hugs the frame so only the mirror remains, no white corners */
+    -webkit-mask-image:radial-gradient(ellipse 50% 70% at 50% 50%, #000 86%, rgba(0,0,0,.55) 94%, transparent 100%);
+            mask-image:radial-gradient(ellipse 50% 70% at 50% 50%, #000 86%, rgba(0,0,0,.55) 94%, transparent 100%);
+  }
+  #mirror-video.lighten{ mix-blend-mode:screen; } /* fallback toggle if needed */
+  #mirror-wrap::before{ /* silver light behind the glass, so multiply keeps it luminous */
+    content:""; position:absolute; inset:14% 26%; z-index:-1; border-radius:50%;
+    background:radial-gradient(ellipse 60% 68% at 50% 45%, rgba(200,215,230,.5), rgba(150,170,195,.2) 55%, transparent 78%);
+    filter:blur(14px);
+    animation:glow 5s ease-in-out infinite;
+  }
+  #mirror-wrap::after{ /* cool ambient halo around the whole mirror */
+    content:""; position:absolute; inset:-6% -20%; z-index:-2; border-radius:50%;
+    background:radial-gradient(ellipse 52% 60% at 50% 50%, rgba(120,60,70,.28), rgba(70,30,60,.12) 54%, transparent 76%);
+    filter:blur(30px);
+    animation:glow 5s ease-in-out infinite;
+  }
+  @keyframes glow{ 0%,100%{ opacity:.6; transform:scale(1); } 50%{ opacity:1; transform:scale(1.06); } }
+
+  @media (prefers-reduced-motion:reduce){
+    #invocation h1, #mirror-wrap, #mirror-wrap::before, #mirror-wrap::after{ animation:none; }
+  }
+  @media (max-width:640px){
+    #mirror-wrap{ height:auto; width:92vw; aspect-ratio:3/4; }
+    #invocation{ top:6vh; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="ink">
+    <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="2" seed="7" result="n">
+      <animate attributeName="baseFrequency" dur="26s" values="0.012 0.018;0.016 0.013;0.012 0.018" repeatCount="indefinite"/>
+    </feTurbulence>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
+<video id="bg-video" autoplay muted loop playsinline preload="auto"
+  src="https://pub-d162b784ec1e4b9480c9426577ad674c.r2.dev/0720-04.mp4"></video>
+<div id="bg-tint"></div>
+
+<a id="return-house" href="tablet-house.html">&#8592; The Tablet House</a>
+
+<div id="invocation"><h1>Mirror, mirror</h1></div>
+
+<div id="mirror-wrap">
+  <video id="mirror-video" autoplay muted loop playsinline preload="auto"
+    src="https://pub-d162b784ec1e4b9480c9426577ad674c.r2.dev/mirror.mp4"></video>
+</div>
+
+<script>
+(function(){
+  /* make sure both films run: retry on load and on first pointer interaction */
+  var vids = [document.getElementById('bg-video'), document.getElementById('mirror-video')];
+  function tryPlay(){ vids.forEach(function(v){ if(v && v.paused){ var p=v.play(); if(p&&p.catch) p.catch(function(){}); } }); }
+  window.addEventListener('load', tryPlay);
+  document.addEventListener('pointerdown', tryPlay, { once:true });
+  tryPlay();
+})();
+</script>
+</body>
+</html>
